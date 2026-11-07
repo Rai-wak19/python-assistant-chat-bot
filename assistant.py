@@ -5,11 +5,27 @@ from google.genai import types
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv(override=True)
 
-# Initialize the Gemini client. 
-# It will automatically look for the GEMINI_API_KEY in the environment variables.
-client = genai.Client()
+def get_client() -> genai.Client:
+    """
+    Initializes and returns the Gemini client using either the environment variable
+    or Streamlit secrets (useful when hosted on Streamlit Community Cloud).
+    """
+    load_dotenv(override=True)
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        try:
+            import streamlit as st
+            if "GEMINI_API_KEY" in st.secrets:
+                api_key = st.secrets["GEMINI_API_KEY"]
+                os.environ["GEMINI_API_KEY"] = api_key
+        except Exception:
+            pass
+
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY is missing. Please set it in your .env file or Streamlit secrets.")
+    return genai.Client(api_key=api_key)
 
 # 1. Define the tool (Python function)
 def search_notes(query: str) -> str:
@@ -40,6 +56,8 @@ def get_basic_llm_response(prompt: str) -> str:
     Sends a prompt to the LLM and handles the tool-calling flow if the LLM requests it.
     """
     try:
+        client = get_client()
+
         # 2. Configure the tool with Gemini
         # We pass our Python function in the `tools` list.
         # The SDK automatically converts its signature and docstring into a tool schema.
