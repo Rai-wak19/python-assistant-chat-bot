@@ -1,18 +1,20 @@
 import os
+from pathlib import Path
 # pyrefly: ignore [missing-import]
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv(override=True)
+env_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=env_path, override=True)
 
 def get_client() -> genai.Client:
     """
     Initializes and returns the Gemini client using either the environment variable
     or Streamlit secrets (useful when hosted on Streamlit Community Cloud).
     """
-    load_dotenv(override=True)
+    load_dotenv(dotenv_path=env_path, override=True)
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         try:
@@ -25,7 +27,10 @@ def get_client() -> genai.Client:
 
     if not api_key:
         raise ValueError("GEMINI_API_KEY is missing. Please set it in your .env file or Streamlit secrets.")
-    return genai.Client(api_key=api_key)
+    return genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(api_version="v1beta"),
+    )
 
 # 1. Define the tool (Python function)
 def search_notes(query: str) -> str:
@@ -64,6 +69,7 @@ def get_basic_llm_response(prompt: str) -> str:
         config = types.GenerateContentConfig(
             system_instruction="You are a helpful AI Study Assistant. You can search the user's study notes using the search_notes tool. If the user asks a general question, use your general knowledge to answer it.",
             tools=[search_notes],
+            http_options=types.HttpOptions(api_version="v1beta"),
         )
         
         # 3. First API call: User question -> Gemini
