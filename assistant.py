@@ -67,10 +67,13 @@ def get_basic_llm_response(prompt: str) -> str:
         # We pass our Python function in the `tools` list.
         # The SDK automatically converts its signature and docstring into a tool schema.
         config = types.GenerateContentConfig(
-            system_instruction="You are a helpful AI Study Assistant. You can search the user's study notes using the search_notes tool. If the user asks a general question, use your general knowledge to answer it.",
-            tools=[search_notes],
-            http_options=types.HttpOptions(api_version="v1beta"),
-        )
+        system_instruction=(
+        "You are a helpful AI Study Assistant. "
+        "You can search the user's study notes using the search_notes tool. "
+        "If the user asks a general question, use your general knowledge to answer it."
+        ),
+        tools=[search_notes],
+)
         
         # 3. First API call: User question -> Gemini
         # We use a list for `contents` so we can maintain conversation history.
